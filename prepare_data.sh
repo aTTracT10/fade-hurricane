@@ -17,13 +17,13 @@ for LANGUAGE in ${LANGUAGES[@]}; do
     SPEECH_TARGET_DIR="${DIR}/prepared-data/speech/${LANGUAGE}-${DISTANCE}"
     NOISE_TARGET="${DIR}/prepared-data/noise/${LANGUAGE}-${DISTANCE}.wav"
 
-    mkdir -p "${RIR_TARGET_DIR}"
-    mkdir -p "${SPEECH_TARGET_DIR}"
-    mkdir -p "${DIR}/prepared-data/noise"
+    mkdir -p "${RIR_TARGET_DIR}" || exit 1
+    mkdir -p "${SPEECH_TARGET_DIR}" || exit 1
+    mkdir -p "${DIR}/prepared-data/noise" || exit 1
 
     FILELIST=$(mktemp) || exit 1
 
-    find "${SAN_SOURCE_DIR}" -iname "*.wav" | sort > "${FILELIST}"
+    find "${SAN_SOURCE_DIR}" -iname "*.wav" | sort > "${FILELIST}" || exit 1
 
     octave --eval "
       targetfs = 48000;
@@ -40,7 +40,7 @@ for LANGUAGE in ${LANGUAGES[@]}; do
         noise = [noise;in(:,2:3)];
       end
       audiowrite('${NOISE_TARGET}',noise(1:60*targetfs,:),targetfs,'BitsPerSample',32);
-      "
+      " || exit 1
     octave --eval "
       targetfs = 48000;
       [in, fs] = audioread('${RIR_SOURCE}');
@@ -49,6 +49,7 @@ for LANGUAGE in ${LANGUAGES[@]}; do
       end
       [~, name, extension] = fileparts('${RIR_SOURCE}');
       audiowrite(['${RIR_TARGET_DIR}/',name,extension],in.*10.^(-65./20),targetfs,'BitsPerSample',32);
-      "
+      " || exit 1
+    rm "${FILELIST}"
   done
 done
