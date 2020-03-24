@@ -1,6 +1,4 @@
 #!/bin/bash
-#
-# Copyright (C) 2019 Marc René Schädler
 
 DIR=$(cd "$( dirname "$0" )" && pwd)
 
@@ -13,9 +11,9 @@ for LANGUAGE in ${LANGUAGES[@]}; do
     RIR_SOURCE="${DIR}/original-data/HC2_natural_data/room_impulse_responses/${RIR_SOURCE_DIR}/RIR_${DISTANCE}.wav"
     SAN_SOURCE_DIR="${DIR}/original-data/HC2_natural_data/speech_and_noise/${DISTANCE}/clean_${LANGUAGE}/${SNR}/"
 
-    RIR_TARGET_DIR="${DIR}/prepared-data/speech-hrir/${DISTANCE}"
-    SPEECH_TARGET_DIR="${DIR}/prepared-data/speech/${LANGUAGE}-${DISTANCE}"
-    NOISE_TARGET="${DIR}/prepared-data/noise/${LANGUAGE}-${DISTANCE}.wav"
+    RIR_TARGET_DIR="${DIR}/prepared-data/speech-hrir/irD${DISTANCE}"
+    SPEECH_TARGET_DIR="${DIR}/prepared-data/speech/L${LANGUAGE:0:2}D${DISTANCE}"
+    NOISE_TARGET="${DIR}/prepared-data/noise/noise-L${LANGUAGE:0:2}D${DISTANCE}.wav"
 
     mkdir -p "${RIR_TARGET_DIR}" || exit 1
     mkdir -p "${SPEECH_TARGET_DIR}" || exit 1
@@ -39,7 +37,7 @@ for LANGUAGE in ${LANGUAGES[@]}; do
         audiowrite(['${SPEECH_TARGET_DIR}/',name,extension],speech,targetfs,'BitsPerSample',32);
         noise = [noise;in(:,2:3)];
       end
-      audiowrite('${NOISE_TARGET}',noise(1:60*targetfs,:),targetfs,'BitsPerSample',32);
+      audiowrite('${NOISE_TARGET}',noise(1:60*targetfs,1),targetfs,'BitsPerSample',32);
       " || exit 1
     octave --eval "
       targetfs = 48000;
@@ -48,7 +46,7 @@ for LANGUAGE in ${LANGUAGES[@]}; do
         in = resample(in,targetfs,fs);
       end
       [~, name, extension] = fileparts('${RIR_SOURCE}');
-      audiowrite(['${RIR_TARGET_DIR}/',name,extension],in.*10.^(-65./20),targetfs,'BitsPerSample',32);
+      audiowrite(['${RIR_TARGET_DIR}/',name,extension],in(:,1).*10.^(-65./20),targetfs,'BitsPerSample',32);
       " || exit 1
     rm "${FILELIST}"
   done
